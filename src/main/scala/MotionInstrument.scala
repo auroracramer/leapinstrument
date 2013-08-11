@@ -28,9 +28,40 @@ extends HasFingersListeners with HasHandListeners {
 }
 
 trait HasFingersListeners {
-  def fingersListeners: Seq[(Seq[Finger]) => Unit]
+  type FingersListener = (Seq[Finger]) => Unit
+  def fingersListeners: Seq[FingersListener]
 }
 
 trait HasHandListeners {
-  def handListeners: Seq[(Hand) => Unit]
+  type HandListener = (Hand) => Unit
+  def handListeners: Seq[HandListener]
+}
+
+case class MainInstrument(handId: Int, instrument: Instrument)
+extends MotionInstrument(handId, instrument) {
+
+  // Define listeners for fingers
+  val fingerTipProximityTo: FingersListener = (fingers) => {
+    val proximity = for {
+      finger <- fingers
+      pos = finger.tipPosition
+    } yield 4
+    // TODO: Calculate the diameter of a sphere containing all
+    //       points
+  }
+
+  // Define Listeners for a hand
+  val yToPitch: HandListener = (hand) => {
+    val y = hand.palmPosition.getY
+    // TODO: define instrument interface before we can
+    //       actually do anything here
+  }
+
+  val sphereTo: HandListener = (hand) => {
+    val radius = hand.sphereRadius
+  }
+
+
+  def fingersListeners: Seq[FingersListener] = Seq()
+  def handListeners: Seq[HandListener] = Seq(yToPitch)
 }
