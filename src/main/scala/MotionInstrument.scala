@@ -1,3 +1,5 @@
+package com.jasoncramer.instrument
+
 import com.leapmotion.leap.{Finger, Frame, Hand, Leap, FingerList, HandList}
 import scala.collection.JavaConversions._
 
