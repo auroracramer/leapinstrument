@@ -5,8 +5,6 @@ import com.leapmotion.leap.{Controller, Finger, Frame, Hand, Leap,
 import scala.language.implicitConversions
 import scala.collection.JavaConversions._
 
-class Instrument
-
 /** An interface between the LeapMotion SDK and the sound synthesis
   * API.
   */
