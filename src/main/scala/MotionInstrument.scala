@@ -1,6 +1,7 @@
 package com.jasoncramer.instrument
 
-import com.leapmotion.leap.{Finger, Frame, Hand, Leap, FingerList, HandList}
+import com.leapmotion.leap.{Finger, Frame, Hand, Leap, Listener, FingerList, HandList}
+import scala.language.implicitConversions
 import scala.collection.JavaConversions._
 
 class Instrument
@@ -9,7 +10,10 @@ class Instrument
   * API.
   */
 abstract class MotionInstrument(handID: Int, instrument: Instrument)
-extends HasFingersListeners with HasHandListeners {
+extends Listener with HasFingersListeners with HasHandListeners {
+
+  implicit def fingerList2Seq(flist: FingerList): Seq[Finger] = flist.toSeq
+  implicit def handList2Seq(hlist: HandList): Seq[Hand] = hlist.toSeq
 
   /** Provide a Frame update to the instrument.
     *
@@ -21,7 +25,7 @@ extends HasFingersListeners with HasHandListeners {
   def update(frame: Frame): Boolean = {
     val hand = frame.hands.get(handID)
     if (hand.isValid) {
-      val fingers = hand.fingers.toSeq
+      val fingers = hand.fingers
       for (handListener <- handListeners) handListener(hand)
       for (fingersListener <- fingersListeners) fingersListener(fingers)
       true
