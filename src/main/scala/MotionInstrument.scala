@@ -1,6 +1,7 @@
-package com.jasoncramer.instrument
+package com.jasoncramer.leapinstrument
 
-import com.leapmotion.leap.{Finger, Frame, Hand, Leap, Listener, FingerList, HandList}
+import com.leapmotion.leap.{Controller, Finger, Frame, Hand, Leap,
+                            Listener, FingerList, HandList}
 import scala.language.implicitConversions
 import scala.collection.JavaConversions._
 
@@ -22,14 +23,15 @@ extends Listener with HasFingersListeners with HasHandListeners {
     *
     * @return True if the hand is still valid
     */
-  def update(frame: Frame): Boolean = {
-    val hand = frame.hands.get(handID)
+  override def onFrame(controller: Controller): Unit = {
+    val frame = controller.frame
+    val hands = frame.hands
+    val hand = hands(0) // Just take the first hand available
     if (hand.isValid) {
       val fingers = hand.fingers
       for (handListener <- handListeners) handListener(hand)
       for (fingersListener <- fingersListeners) fingersListener(fingers)
-      true
-    } else false
+    }
   }
 }
 
@@ -76,11 +78,11 @@ extends MotionInstrument(handId, instrument) {
     //       actually do anything here
   }
 
-  val sphereTo: HandListener = (hand) => {
+  val sphereToVolume: HandListener = (hand) => {
     val radius = hand.sphereRadius
   }
 
 
   def fingersListeners: Seq[FingersListener] = Seq()
-  def handListeners: Seq[HandListener] = Seq(yToPitch)
+  def handListeners: Seq[HandListener] = Seq(yToPitch, sphereToVolume)
 }
