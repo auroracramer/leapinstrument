@@ -4,9 +4,9 @@ import com.jsyn._
 import com.jasoncramer.scsyn._
 
 object Main extends App {
-  val instr = SawtoothInstrument()
-  instr.start()
-
+  val engine = Engine()
+  engine.start()
+  /*
   while(true) {
     val ln = readLine(">>> ").split(" ")
     assert(ln.length <= 2)
@@ -19,5 +19,6 @@ object Main extends App {
       case _ => {}
     }
   }
+  */
 }
 

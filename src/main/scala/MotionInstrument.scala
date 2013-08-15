@@ -12,7 +12,18 @@ abstract class MotionInstrument(handID: Int, instrument: Instrument)
 extends Listener with HasFingersListeners with HasHandListeners {
 
   implicit def fingerList2Seq(flist: FingerList): Seq[Finger] = flist.toSeq
-  implicit def handList2Seq(hlist: HandList): Seq[Hand] = hlist.toSeq
+  //implicit def handList2Seq(hlist: HandList): Seq[Hand] = hlist.toSeq
+  private[this] var running = false
+
+  def start(): Unit = {
+    this.running = true
+    instrument.start()
+  }
+
+  def stop(): Unit = {
+    this.running = false
+    instrument.stop()
+  }
 
   /** Provide a Frame update to the instrument.
     *
@@ -22,24 +33,28 @@ extends Listener with HasFingersListeners with HasHandListeners {
     * @return True if the hand is still valid
     */
   override def onFrame(controller: Controller): Unit = {
-    val frame = controller.frame
-    val hands = frame.hands
-    val hand = hands(0) // Just take the first hand available
-    if (hand.isValid) {
-      val fingers = hand.fingers
-      for (handListener <- handListeners) handListener(hand)
-      for (fingersListener <- fingersListeners) fingersListener(fingers)
+    if(this.running && controller.isConnected()) {
+      val frame = controller.frame
+      val hands = frame.hands.toSeq
+      if(hands.length != 0) {
+        val hand = hands(0) // Just take the first hand available
+        if (hand.isValid) {
+          val fingers = hand.fingers
+          for (handListener <- handListeners) handListener(hand, frame)
+          for (fingersListener <- fingersListeners) fingersListener(fingers, frame)
+        }
+      }
     }
   }
 }
 
 trait HasFingersListeners {
-  type FingersListener = (Seq[Finger]) => Unit
+  type FingersListener = (Seq[Finger], Frame) => Unit
   def fingersListeners: Seq[FingersListener]
 }
 
 trait HasHandListeners {
-  type HandListener = (Hand) => Unit
+  type HandListener = (Hand, Frame) => Unit
   def handListeners: Seq[HandListener]
 }
 
@@ -47,7 +62,7 @@ case class MainInstrument(handId: Int, instrument: Instrument)
 extends MotionInstrument(handId, instrument) {
 
   // Define listeners for fingers
-  val fingerTipProximityTo: FingersListener = (fingers) => {
+  val fingerTipProximityTo: FingersListener = (fingers, frame) => {
     // APPROACH 1a:
     // Naive furthest points
     //
@@ -70,17 +85,21 @@ extends MotionInstrument(handId, instrument) {
   }
 
   // Define Listeners for a hand
-  val yToPitch: HandListener = (hand) => {
-    val y = hand.palmPosition.getY
-    // TODO: define instrument interface before we can
-    //       actually do anything here
+  val yToPitch: HandListener = (hand, frame) => {
+    val y = hand.palmPosition.getY.toDouble
+    val ratio = y/frame.interactionBox.height.toDouble
+    instrument.setFreq(4200 * ratio)
   }
 
-  val sphereToVolume: HandListener = (hand) => {
+  val sphereToVolume: HandListener = (hand, frame) => {
     val radius = hand.sphereRadius
+
+    // Obviously we'll need something better here
+    instrument.setVolume(radius)
+
   }
 
 
   def fingersListeners: Seq[FingersListener] = Seq()
-  def handListeners: Seq[HandListener] = Seq(yToPitch, sphereToVolume)
+  def handListeners: Seq[HandListener] = Seq(yToPitch) //, sphereToVolume)
 }
