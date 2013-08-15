@@ -44,12 +44,25 @@ extends MotionInstrument(handId, instrument) {
 
   // Define listeners for fingers
   val fingerTipProximityTo: FingersListener = (fingers) => {
-    val proximity = for {
-      finger <- fingers
-      pos = finger.tipPosition
-    } yield 4
-    // TODO: Calculate the diameter of a sphere containing all
-    //       points
+    // APPROACH 1a:
+    // Naive furthest points
+    //
+    // The intuition here is that a sphere where the diameter
+    // is defined by a line segment drawn between the two
+    // points that are furthest apart.
+    //
+    // Since n<=5, which is relatively small, at least for now,
+    // we can get away with the naive O(n^2) solution
+
+    var maxDist = Double.MinValue
+
+    for {
+      (finger, index) <- fingers.zipWithIndex
+      if index < (fingers.size - 1)
+      finger2 <- fingers.drop(index + 1)
+      dist = finger.tipPosition.distanceTo(finger2.tipPosition)
+    } if(dist > maxDist) maxDist = dist
+
   }
 
   // Define Listeners for a hand
